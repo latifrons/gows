@@ -36,6 +36,14 @@ func NewHub() *Hub {
 	}
 }
 
+func (h *Hub) Broadcast(bytes []byte) {
+	h.broadcast <- bytes
+}
+
+func (h *Hub) Unicast(msg *UnicastMessage) {
+	h.unicast <- msg
+}
+
 func (h *Hub) Run(closeOnNobody bool) {
 RUN:
 	for {
@@ -46,7 +54,7 @@ RUN:
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
-				close(client.send)
+				close(client.sendChan)
 			}
 			if len(h.clients) == 0 && h.Status == 1 && closeOnNobody {
 				logrus.Info("hub stopped")
@@ -59,11 +67,11 @@ RUN:
 				break RUN
 			}
 			for client := range h.clients {
-				client.send <- message
+				client.sendChan <- message
 			}
 		case umessage := <-h.unicast:
 			if _, ok := h.clients[umessage.Client]; ok {
-				umessage.Client.send <- umessage.Message
+				umessage.Client.sendChan <- umessage.Message
 			}
 			logrus.Info("Unicasted: ", string(umessage.Message))
 		}
