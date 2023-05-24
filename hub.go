@@ -61,7 +61,7 @@ RUN:
 				break RUN
 			}
 		case message := <-h.broadcast:
-			logrus.Info("Broadcasting: ", string(message))
+			logrus.WithField("count", len(h.clients)).Info("Broadcasting: ", string(message))
 			if len(h.clients) == 0 && h.Status == 1 && closeOnNobody {
 				logrus.Info("hub stopped")
 				break RUN
